@@ -112,3 +112,4 @@ platform used by 20,000+ journals worldwide, and commercial platforms like Schol
 For a final-year project or competition entry, this build covers the full core
 workflow a real journal needs; the gap versus OJS is mainly in indexing integrations
 and years of production hardening, not core functionality.
+# siahssr
