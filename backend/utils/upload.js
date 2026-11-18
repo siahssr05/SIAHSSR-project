@@ -16,13 +16,19 @@ function makeStorage(subfolder) {
   });
 }
 
-const paperFilter = (req, file, cb) => {
-  const isDocxMime =
-    file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-  const isDocxExt = file.originalname.toLowerCase().endsWith(".docx");
+// Paper submissions accept Word (.docx) or PDF. Both the MIME type and the file
+// extension must agree, so a renamed file of another type is rejected.
+const PAPER_TYPES = {
+  ".docx": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+  ".pdf": ["application/pdf"],
+};
 
-  if (isDocxMime && isDocxExt) cb(null, true);
-  else cb(new Error("Only Word (.docx) files are allowed for paper submissions"));
+const paperFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedMimes = PAPER_TYPES[ext];
+
+  if (allowedMimes && allowedMimes.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Only Word (.docx) or PDF (.pdf) files are allowed for paper submissions"));
 };
 
 const imageFilter = (req, file, cb) => {
@@ -49,14 +55,22 @@ const uploadLogo = multer({
   limits: { fileSize: 3 * 1024 * 1024 },
 });
 
+const uploadNotice = multer({
+  storage: makeStorage("notices"),
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+// Institute documents are Word (.docx) only now — same rule as paper
+// submissions, and no PDFs anywhere in the system (receipts included; see
+// utils/receiptGenerator.js).
 const documentFilter = (req, file, cb) => {
-  const allowed = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error("Only PDF or Word documents are allowed"));
+  const isDocxMime =
+    file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const isDocxExt = file.originalname.toLowerCase().endsWith(".docx");
+
+  if (isDocxMime && isDocxExt) cb(null, true);
+  else cb(new Error("Only Word (.docx) files are allowed"));
 };
 
 const uploadDocument = multer({
@@ -65,4 +79,4 @@ const uploadDocument = multer({
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
 });
 
-module.exports = { uploadPaper, uploadImage, uploadLogo, uploadDocument };
+module.exports = { uploadPaper, uploadImage, uploadLogo, uploadNotice, uploadDocument };
